@@ -23,6 +23,26 @@ function ask(question: string): Promise<string> {
   });
 }
 
+function printTasks(tasks: Task[]): void {
+  console.log("\n--- Tasks ---");
+
+  tasks.forEach((task) => {
+    const statusIcon = task.status === TaskStatus.Completed ? "✔" : "○";
+
+    console.log(`${task.id} | ${statusIcon} ${task.title}`);
+  });
+}
+
+function parseId(input: string): number | null {
+  const id = Number(input);
+  return Number.isNaN(id) ? null : id;
+}
+
+function exitApp(): void {
+  console.log("Goodbye!");
+  rl.close();
+}
+
 enum TaskStatus {
   Pending = "PENDING",
   Completed = "COMPLETED",
@@ -44,7 +64,9 @@ let tasks: Task[] = [];
 
 // console.log(tasks);
 
-function addTask(title: string): Task {
+function addTask(title: string): Task | null {
+  if (!title.trim()) return null;
+
   const newTask: Task = {
     id: Date.now(),
     title,
@@ -96,8 +118,8 @@ async function main(): Promise<void> {
     switch (choice) {
       case "1": {
         const title = await ask("Task title: ");
-        addTask(title);
-        console.log("Task added.");
+        const task = addTask(title);
+        console.log(task ? "Task added." : "Invalid title.");
         break;
       }
       case "2": {
@@ -105,27 +127,25 @@ async function main(): Promise<void> {
         if (allTasks.length === 0) {
           console.log("No tasks available.");
         } else {
-          allTasks.forEach((task) => {
-            console.log(`${task.id} | ${task.title} | ${task.status}`);
-          });
+          printTasks(allTasks);
         }
         break;
       }
       case "3": {
-        const id = Number(await ask("Task ID to complete: "));
-        const success = completeTask(id);
+        const id = parseId(await ask("Task ID to complete: "));
+        const success = completeTask(id!);
         console.log(success ? "Task completed." : "Task not found.");
         break;
       }
       case "4": {
-        const id = Number(await ask("Task ID to delete: "));
-        const success = deleteTask(id);
+        const id = parseId(await ask("Task ID to delete: "));
+        const success = deleteTask(id!);
         console.log(success ? "Task deleted." : "Task not found.");
         break;
       }
       case "5": {
         running = false;
-        console.log("Exiting...");
+        exitApp();
         break;
       }
       default:
